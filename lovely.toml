@@ -1,0 +1,200 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 5
+
+# new logic for glass cards
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = '''elseif _c.effect == 'Glass Card' then loc_vars = {cfg.Xmult, G.GAME.probabilities.normal, cfg.extra}'''
+position = "at"
+payload = '''elseif _c.effect == 'Glass Card' then loc_vars = {cfg.Xmult, G.GAME.probabilities.glass_prob, cfg.extra}'''
+
+match_indent = true
+overwrite = false
+times = 1
+
+
+# add one more variable for glass cards 
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = '''probabilities = {
+            normal = 1,
+        },'''
+position = "at"
+    payload = '''
+            probabilities = {
+                normal = 1,
+                old_glass_prob = 1,
+                glass_prob = 1          
+            },
+        '''
+
+match_indent = true
+overwrite = false
+times = 1
+
+
+# new logic for glass cards
+[[patches]]
+[patches.pattern]
+target = "functions/state_events.lua"
+pattern = '''G.FUNCS.evaluate_play = function(e)'''
+position = "after"
+payload = '''function SMODS.calculate_destroying_cards_artmoded(context, cards_destroyed, scoring_hand)
+    for i,card in ipairs(scoring_hand or context.cardarea.cards) do
+        local destroyed = nil
+        --un-highlight all cards
+        if scoring_hand then highlight_card(card,(i-0.999)/(#scoring_hand-0.998),'down') end
+
+        -- context.destroying_card calculations
+        context.destroy_card = card
+        context.destroying_card = scoring_hand and card
+        for _, area in ipairs(SMODS.get_card_areas('jokers')) do
+            local should_break
+            for _, _card in ipairs(area.cards) do
+                local eval, post = eval_card(_card, context)
+                local self_destroy = false
+                for key, effect in pairs(eval) do
+                    if type(effect) == 'table' then
+                        self_destroy = SMODS.calculate_effect(effect, card)
+                    else
+                        self_destroy = effect
+                    end
+                end
+                SMODS.trigger_effects({post}, card)
+                if self_destroy then 
+                    destroyed = true
+                    should_break = true
+                    break
+                end
+            end
+            if should_break then break end
+        end
+        
+        if scoring_hand and SMODS.has_enhancement(card, 'm_glass') and not card.debuff and pseudorandom('glass') < G.GAME.probabilities.glass_prob/(card.ability.name == 'Glass Card' and card.ability.extra or G.P_CENTERS.m_glass.config.extra) then
+            destroyed = true
+        end
+        
+        local eval, post = eval_card(card, context)
+        local self_destroy = false
+        for key, effect in pairs(eval) do
+            self_destroy = SMODS.calculate_effect(effect, card)
+        end
+        SMODS.trigger_effects({post}, card)
+        if self_destroy then destroyed = true end
+        
+        -- TARGET: card destroyed
+
+        if destroyed then 
+            if SMODS.shatters(card) then
+                card.shattered = true
+            else 
+                card.destroyed = true
+            end 
+            cards_destroyed[#cards_destroyed+1] = card
+        end
+    end
+end'''
+
+match_indent = true
+overwrite = false
+times = 1
+
+
+[[patches]]
+[patches.pattern]
+target = "functions/state_events.lua"
+pattern = '''SMODS.calculate_destroying_cards({ full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, cardarea = v }, cards_destroyed, v == G.play and scoring_hand or v == 'unscored' and unscored_cards or nil)'''
+position = "at"
+    payload = '''SMODS.calculate_destroying_cards_artmoded({ full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, cardarea = v }, cards_destroyed, v == G.play and scoring_hand or v == 'unscored' and unscored_cards or nil)'''
+
+match_indent = true
+overwrite = false
+times = 1
+
+# add logic for some jokers
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''if self.ability.name == 'Glass Joker' and not context.blueprint then
+                local glass_cards = 0
+                for k, val in ipairs(context.removed) do
+                    if val.shattered then glass_cards = glass_cards + 1 end
+                end
+                if glass_cards > 0 then 
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            self.ability.x_mult = self.ability.x_mult + self.ability.extra*glass_cards
+                        return true
+                        end
+                    }))
+                    card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize{type = 'variable', key = 'a_xmult', vars = {self.ability.x_mult + self.ability.extra*glass_cards}}})
+                    return true
+                        end
+                    }))                    return nil, true
+                end
+                return
+            end'''
+position = "before"
+payload = '''if self.ability.name == 'ARTM AntiGlass Joker' and not context.blueprint then
+                local glass_cards = 0
+                
+                for k, val in ipairs(context.removed) do
+                    if val.shattered then glass_cards = glass_cards + 1 end
+                end
+
+                if glass_cards > 0 then 
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            self.ability.extra.current_mult = self.ability.extra.current_mult - self.ability.extra.mult_mod*glass_cards
+                        return true
+                        end
+                    }))
+                    card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize{type = 'variable', key = 'a_xmult', vars = {self.ability.extra.current_mult - self.ability.extra.mult_mod*glass_cards}}})
+                    return true
+                        end
+                    }))                    return nil, true
+                end
+                return
+            end
+            
+            '''
+
+match_indent = true
+overwrite = false
+times = 1
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''if self.ability.name == "Steel Joker" then 
+            self.ability.steel_tally = 0
+            for k, v in pairs(G.playing_cards) do
+                if SMODS.has_enhancement(v, 'm_steel') then self.ability.steel_tally = self.ability.steel_tally+1 end
+            end
+        end'''
+position = "after"
+    payload = '''if self.ability.name == "ARTM Glassmaster" then 
+            self.ability.extra.current_mult = 1
+            for k, v in pairs(G.playing_cards) do
+                if SMODS.has_enhancement(v, 'm_glass') then self.ability.extra.current_mult = self.ability.extra.current_mult + self.ability.extra.mult_mod end
+            end
+        end
+        if self.ability.name == "ARTM Glassnovice" then 
+            self.ability.extra.current_mult = 0
+            for k, v in pairs(G.playing_cards) do
+                if SMODS.has_enhancement(v, 'm_glass') then self.ability.extra.current_mult = self.ability.extra.current_mult + self.ability.extra.mult_mod end
+            end
+        end
+        '''
+
+match_indent = true
+overwrite = false
+times = 1
