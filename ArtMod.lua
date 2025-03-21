@@ -500,9 +500,7 @@ function SMODS.INIT.ArtMod()
             ability = {
                 extra = {
                     mult_mod = 0.1,
-                    current_mult = 1,
-                    glass_count = 0,
-                    calc = false
+                    current_mult = 1
                 }
             },
             rarity = 2,
@@ -521,15 +519,15 @@ function SMODS.INIT.ArtMod()
 
         SMODS.Jokers.j_artm_antiglassjoker.calculate = function(self, context)
 
-            if context.before and not context.blueprint then
-                local glasses = 0;
+            if context.after and not context.blueprint then
+                glasses = 0;
                 for _, card in ipairs(context.scoring_hand) do
                     if card.ability.effect == "Glass Card" then
                         glasses  = glasses  + 1
                     end
                 end
                 if glasses > 0 then
-                    self.ability.extra.current_mult = self.ability.extra.current_mult + self.ability.extra.mult_mod *glasses 
+                    self.ability.extra.current_mult = self.ability.extra.current_mult + self.ability.extra.mult_mod * glasses
                     card_eval_status_text(self, 'extra', nil, nil, nil, {
                         message = localize{
                             type='variable', 
