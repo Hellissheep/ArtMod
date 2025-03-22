@@ -43,7 +43,7 @@ times = 1
 target = "functions/state_events.lua"
 pattern = '''G.FUNCS.evaluate_play = function(e)'''
 position = "after"
-payload = '''function SMODS.calculate_destroying_cards_artmoded(context, cards_destroyed, scoring_hand)
+payload = '''function SMODS.calculate_destroying_cards(context, cards_destroyed, scoring_hand)
     for i,card in ipairs(scoring_hand or context.cardarea.cards) do
         local destroyed = nil
         --un-highlight all cards
@@ -98,18 +98,6 @@ payload = '''function SMODS.calculate_destroying_cards_artmoded(context, cards_d
         end
     end
 end'''
-
-match_indent = true
-overwrite = false
-times = 1
-
-
-[[patches]]
-[patches.pattern]
-target = "functions/state_events.lua"
-pattern = '''SMODS.calculate_destroying_cards({ full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, cardarea = v }, cards_destroyed, v == G.play and scoring_hand or v == 'unscored' and unscored_cards or nil)'''
-position = "at"
-    payload = '''SMODS.calculate_destroying_cards_artmoded({ full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, cardarea = v }, cards_destroyed, v == G.play and scoring_hand or v == 'unscored' and unscored_cards or nil)'''
 
 match_indent = true
 overwrite = false
