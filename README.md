@@ -1,15 +1,17 @@
 # ArtMod
 
+**This is dev branch**
+
 **Mod for Balatro**  
-Adds 10 Jokers to enhance Glass Card builds and more.
+Adds 10 Jokers, 1 Tarot, 1 Spectral, 1 Deck, 1 Boss blind to enhance Glass Card builds and more.
 
 ## Installation Guide
 
 > **Recommended:** Download from [Releases]
 
 ### Requirements:
-- [Steamodded](https://github.com/Steamopollys/Steamodded/) v0.9.5 or newer
-- [Lovely Injector](https://github.com/ethangreen-dev/lovely-injector) v0.4.0 or newer
+- [Steamodded](https://github.com/Steamopollys/Steamodded/) 1.0.0 beta (0312b) or newer
+- [Lovely Injector](https://github.com/ethangreen-dev/lovely-injector) v0.7.1 or newer
 
 ### Steps:
 1. Download the mod as a `.zip` archive.
@@ -35,16 +37,16 @@ Adds 10 Jokers to enhance Glass Card builds and more.
   Glass cards do not break when played.
 
 - **Joker Shards**  
-  Glass cards give +0.7 mult and +1% chance to break.
+  Glass cards give +0.7 mult and +1 chance to break.
 
 - **AntiGlass Joker**  
   Gains +0.1 mult for each Glass card played, loses 0.1 mult for each broken Glass card.
 
 - **Glassmaster**  
-  Grants +0.2 mult for each Glass card in your deck.
+  Gives +0.2 mult for each Glass card in your deck.
 
 - **Glassnovice**  
-  Grants +2 mult for each Glass card in your deck.
+  Gives +3 mult for each Glass card in your deck.
 
 - **Common Joker**  
   Each copy gives +5 mult.
@@ -56,7 +58,7 @@ Adds 10 Jokers to enhance Glass Card builds and more.
   After 3 rounds, sell this card to unlock +1 Joker slot.
 
 - **De Morra**  
-  Each played card gives x1.1 mult; each additional card played in the round increases this by x0.1.
+  Each played card gives x1.1 mult, each additional card played in the round increases this by x0.1.
 
 ---
 
@@ -78,6 +80,13 @@ Adds 10 Jokers to enhance Glass Card builds and more.
 
 - **Bulletproof Deck**  
   Start with the negative **Bulletproof Joker** (Glass cards don’t break when played).
+
+---
+
+### ⛃ Blinds:
+
+- **The Lens**  
+  Glass cards are debuffed
 
 ---
 
