@@ -1,7 +1,5 @@
 # ArtMod
 
-**This is dev branch**
-
 **Mod for Balatro**  
 Adds 10 Jokers, 1 Tarot, 1 Spectral, 1 Deck, 1 Boss blind to enhance Glass Card builds and more.
 
