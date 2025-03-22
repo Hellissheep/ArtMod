@@ -11,6 +11,8 @@
 
 -- Config: DISABLE UNWANTED MODS HERE
 local config = {
+    Lens = true,
+
     BulletproofDeck = true,
 
 
@@ -126,6 +128,24 @@ local function init_spectral(spectral, no_sprite)
     end
 end
 
+local function init_blind(blind)
+    local new_blind = SMODS.Blind:new(
+        blind.name,
+        blind.slug,
+        blind.loc,
+        blind.dollars,
+        blind.mult,
+        blind.vars,
+        blind.debuff,
+        blind.pos,
+        blind.boss,
+        blind.boss_colour,
+        blind.defeated,
+        blind.atlas
+    )
+    new_blind:register()
+end
+
 local original_start_run = Game.start_run
 
 function Game:start_run(args)
@@ -189,6 +209,45 @@ function SMODS.INIT.ArtMod()
             newDeck:register()
         end
     end
+
+    SMODS.Atlas({key = 'artm_blinds', path = 'Blinds.png', px = 34, py = 34, frames = 21, atlas_table = 'ANIMATION_ATLAS'})
+
+    if config.Lens then
+        -- Create Blind
+        local Lens = {
+            name = "The Lens",
+            loc = {
+                name = "The Lens",
+                text = {
+                    "Glass cards are debuffed",
+                }
+            },
+            slug = "bl_artm_lens",
+            dollars = 5,
+            mult = 2,
+            vars = {},
+            pos = {y = 0 },
+            boss = {min = 1},
+            boss_colour = HEX('cccccc'),
+            defeated = true,
+            atlas = 'artm_blinds'
+            
+        }
+
+        init_blind(Lens)
+
+        SMODS.Blinds.bl_artm_lens.recalc_debuff = function(self, card, from_blind)
+            if not G.GAME.blind.disabled and card.area ~= G.jokers then
+                if card.config.center == G.P_CENTERS.m_glass then
+                    card:set_debuff(true)
+                    return true
+                end
+                return false
+            end
+        end
+    
+    end
+        
 
     if config.GlassMoneyTarot then
         -- Create Tarot
@@ -625,7 +684,7 @@ function SMODS.INIT.ArtMod()
             slug = "j_artm_glassnovice",
             ability = {
                 extra = {
-                    mult_mod = 2,
+                    mult_mod = 3,
                     current_mult = 0,
                 }
             },
