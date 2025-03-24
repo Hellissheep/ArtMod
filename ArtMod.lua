@@ -31,6 +31,7 @@ local config = {
     CrystalJuggler = true,
     AntimaterialJoker = true,
     DeMorraJoker = true,
+    CrystalBaron = true,
 }
 
 -- Helper functions
@@ -227,7 +228,7 @@ function SMODS.INIT.ArtMod()
             mult = 2,
             vars = {},
             pos = {y = 0 },
-            boss = {min = 1},
+            boss = {min = 3},
             boss_colour = HEX('cccccc'),
             defeated = true,
             atlas = 'artm_blinds'
@@ -950,6 +951,85 @@ function SMODS.INIT.ArtMod()
                 self.ability.extra.Xmult = self.ability.extra.start_mult
             end
         end     
+    end
+
+    if config.CrystalBaron then
+        -- Create Joker
+        local CrystalBaron = {
+            loc = {
+                name = "Crystal Baron",
+                text = {
+                    "Each glass card ",
+                    "held in hand ",
+                    "gives {X:mult,C:white}X#1#{} to mult",
+                    "but has a {C:green}#2# in #3#{} chance", 
+                    " to {C:attention}destroy it{}"
+                }
+            },
+            ability_name = "ARTM Crystal Baron",
+            slug = "j_artm_crystalbaron",
+            ability = {
+                extra = {
+                    del_list = {},
+                }
+            },
+            rarity = 3,
+            cost = 8,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true
+        }
+        
+        init_joker(CrystalBaron)
+
+        function SMODS.Jokers.j_artm_crystalbaron.loc_def(card)
+            return {G.P_CENTERS.m_glass.config.Xmult, G.GAME.probabilities.glass_prob, G.P_CENTERS.m_glass.config.extra}
+        end
+
+        SMODS.Jokers.j_artm_crystalbaron.calculate = function(self, context)
+            if not context.end_of_round and context.individual and context.cardarea == G.hand then 
+                if context.other_card.ability.effect == "Glass Card" then
+                    if context.other_card.debuff then
+                        return {
+                            message = localize('k_debuffed'),
+                            colour = G.C.RED,
+                            card = self,
+                        }
+                    else
+                        if pseudorandom("Glass baron") < G.GAME.probabilities.glass_prob / G.P_CENTERS.m_glass.config.extra then
+                            local the_card = context.other_card
+                            context.other_card.played = true
+                            table.insert(self.ability.extra.del_list, the_card)
+                        end
+                        return {
+                            x_mult = G.P_CENTERS.m_glass.config.Xmult,
+                            card = self,
+
+                        }
+                    end
+                end
+            end
+
+            if SMODS.end_calculate_context(context) and not context.blueprint then
+                cards = self.ability.extra.del_list
+                if #cards > 0 then
+                    G.E_MANAGER:add_event(Event({
+                        trigger = 'after',
+                        delay = 0.7,
+                        blockable = true,
+                        func = (function()
+                            for _, card in ipairs(cards) do
+                                card:shatter()
+                            end
+                            return true
+                        end)
+                    }))
+                    SMODS.calculate_context({remove_playing_cards = true, removed = self.ability.extra.del_list})
+                    self.ability.extra.del_list = {}
+                end
+            end
+        end
     end
 
 
