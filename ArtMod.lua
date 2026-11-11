@@ -5,7 +5,7 @@
 --- MOD_DESCRIPTION: Artems Korotkyy mod for fun)))
 --- DISPLAY_NAME: ArtMod
 --- BADGE_COLOUR: 5c5c5c
---- VERSION: 1.1
+--- VERSION: 1.2
 ----------------------------------------------
 ------------MOD CODE -------------------------
 
