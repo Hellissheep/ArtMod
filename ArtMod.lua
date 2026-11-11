@@ -147,6 +147,17 @@ local function init_blind(blind)
     new_blind:register()
 end
 
+-- Steamodded 1.0+/26.x: glass break chance goes through SMODS.get_probability_vars
+-- with identifier 'glass'. Apply ArtMod's glass_prob multiplier there
+-- (Bulletproof Joker -> 0, Joker Shards -> +1).
+local artm_get_probability_vars = SMODS.get_probability_vars
+function SMODS.get_probability_vars(trigger_obj, base_numerator, base_denominator, identifier, from_roll, no_mod)
+    if identifier == 'glass' and G.GAME and G.GAME.probabilities and G.GAME.probabilities.glass_prob then
+        base_numerator = (base_numerator or 1) * math.max(0, G.GAME.probabilities.glass_prob)
+    end
+    return artm_get_probability_vars(trigger_obj, base_numerator, base_denominator, identifier, from_roll, no_mod)
+end
+
 local original_start_run = Game.start_run
 
 function Game:start_run(args)
@@ -157,9 +168,7 @@ function Game:start_run(args)
     for _, card in ipairs(jokershards) do
         G.P_CENTERS.m_glass.config.Xmult = G.P_CENTERS.m_glass.config.Xmult + card.ability.extra.xmult
     end
-    if #jokershards >= 1 and #bulletproofjoker == 0 then
-        G.GAME.probabilities.glass_prob = G.GAME.probabilities.glass_prob + G.P_CENTERS['j_artm_jokershards'].ability.extra.broke_prob*#jragilejoker
-    end
+    -- glass_prob is stored in the save (G.GAME), so it must not be added again here
 end
 
 local decks = {
@@ -579,8 +588,22 @@ function SMODS.INIT.ArtMod()
 
         SMODS.Jokers.j_artm_antiglassjoker.calculate = function(self, context)
 
+            if context.remove_playing_cards and not context.blueprint then
+                local shattered = 0
+                for _, v in ipairs(context.removed or {}) do
+                    if v.shattered then shattered = shattered + 1 end
+                end
+                if shattered > 0 then
+                    self.ability.extra.current_mult = self.ability.extra.current_mult - self.ability.extra.mult_mod * shattered
+                    card_eval_status_text(self, 'extra', nil, nil, nil, {
+                        message = localize{type = 'variable', key = 'a_xmult', vars = {self.ability.extra.current_mult}},
+                    })
+                end
+                return
+            end
+
             if context.after and not context.blueprint then
-                glasses = 0;
+                local glasses = 0
                 for _, card in ipairs(context.scoring_hand) do
                     if card.ability.effect == "Glass Card" then
                         glasses  = glasses  + 1
